@@ -1,0 +1,1 @@
+gsutil cp gs://rajat-temp/stress_test/output.json .
