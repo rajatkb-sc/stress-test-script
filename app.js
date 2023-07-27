@@ -3,6 +3,7 @@ const aggregateResult = autocannon.aggregateResult
 
 
 const fs = require('fs');
+const { config } = require("process");
 const readline = require('readline');
 
 const FILE_PATH = 'output.json';
@@ -12,23 +13,13 @@ const FRS_URL = "http://feed-relevance-service.sharechat.internal"
 
 
 // Overrides
-const RANKER_TEST_VARIANT_TF = "control"
-const RANKER_TEST_VARIANT_VF = "control"
-const RANKER_TEST_VARIANT_VSF = "control"
+// const RANKER_TEST_VARIANT_TF = "control"
+// const RANKER_TEST_VARIANT_VF = "control"
+// const RANKER_TEST_VARIANT_VSF = "control"
+const RANKER_GLOBAL_FEED_VARIANT = "variant-gf-13"
 const LIMIT = 10
 
-// Batsh size for reading of the disk at once -- Higher the better
-const BATCH_SIZE = 10
 
-const WORKER = 32
-
-const RATE_OF_REQUEST = 11000
-
-const TEST_DURATION = 5 * 60
-
-const CONNECTIONS = 1000
-
-const PIPELINING = 1000000
 
 const LANGUAGES = [
     "Bengali",
@@ -99,9 +90,9 @@ async function* batchRequests(batchSize = 100000) {
 
         switch (jsonObject.feedType) {
             case "video-feed" : {
-                jsonObject.payload.experiment.variant = RANKER_TEST_VARIANT_VF
-                jsonObject.payload.experiment.feedRelGlobalFeedExperiment = "control"
-                jsonObject.payload.experiment.feedRelGlobalRevenueExperiment = "control"
+                // jsonObject.payload.experiment.variant = RANKER_TEST_VARIANT_VF
+                jsonObject.payload.experiment.feedRelGlobalFeedExperiment = RANKER_GLOBAL_FEED_VARIANT
+                // jsonObject.payload.experiment.feedRelGlobalRevenueExperiment = "control"
                 payload = {
                     feedType : jsonObject.feedType,
                     payload : jsonObject.payload,
@@ -113,9 +104,9 @@ async function* batchRequests(batchSize = 100000) {
                 }
             }
             case "trending" : {
-                jsonObject.payload.experiment.variant = RANKER_TEST_VARIANT_TF
-                jsonObject.payload.experiment.feedRelGlobalFeedExperiment = "control"
-                jsonObject.payload.experiment.feedRelGlobalRevenueExperiment = "control"
+                // jsonObject.payload.experiment.variant = RANKER_TEST_VARIANT_TF
+                jsonObject.payload.experiment.feedRelGlobalFeedExperiment = RANKER_GLOBAL_FEED_VARIANT
+                // jsonObject.payload.experiment.feedRelGlobalRevenueExperiment = "control"
                 payload = {
                     feedType : jsonObject.feedType,
                     payload : jsonObject.payload,
@@ -128,9 +119,9 @@ async function* batchRequests(batchSize = 100000) {
                 break
             }
             case "video-suggestion": {
-                jsonObject.payload.variant = RANKER_TEST_VARIANT_VSF
-                jsonObject.payload.feedRelGlobalFeedExperiment = "control"
-                jsonObject.payload.feedRelGlobalRevenueExperiment = "control"
+                // jsonObject.payload.variant = RANKER_TEST_VARIANT_VSF
+                jsonObject.payload.feedRelGlobalFeedExperiment = RANKER_GLOBAL_FEED_VARIANT
+                // jsonObject.payload.feedRelGlobalRevenueExperiment = "control"
                 payload = {
                     feedType : jsonObject.feedType,
                     payload : jsonObject.payload,
@@ -170,45 +161,113 @@ async function* batchRequests(batchSize = 100000) {
 // Usage example
 (async () => {
 
-    // const results = []
 
-    for await(const obj of batchRequests(BATCH_SIZE)) {
 
-        console.log(`read ${obj.length} records : stressing ${FRS_URL}`)
+    const configs = [
+        {
+            BATCH_SIZE: 1000000,
+            WORKER: 32,
+            RATE_OF_REQUEST: 1000,
+            TEST_DURATION: 5 * 60, // warm up
+            CONNECTIONS: 1000,
+            PIPELINING: 1000,
+            STEP_UP : 100,
+        },
+        {
+            BATCH_SIZE: 10000,
+            WORKER: 32,
+            RATE_OF_REQUEST: 2000,
+            TEST_DURATION: 5 * 60, // warm up
+            CONNECTIONS: 1000,
+            PIPELINING: 1000,
+            STEP_UP : 1000,
+        },
+        // smaller batches quicker load 
+        {
+            BATCH_SIZE: 1000,
+            WORKER: 64,
+            RATE_OF_REQUEST: 6000,
+            TEST_DURATION: 60,
+            CONNECTIONS: 1000,
+            PIPELINING: 10000,
+            STEP_UP : 2000,
+        },
+        // smaller batches qicker load
+        {
+            BATCH_SIZE: 1000,
+            WORKER: 64,
+            RATE_OF_REQUEST: 8000,
+            TEST_DURATION: 60,
+            CONNECTIONS: 10000,
+            PIPELINING: 1000000,
+            STEP_UP: 3000,
+        },
+        {
+            BATCH_SIZE: 1000,
+            WORKER: 64,
+            RATE_OF_REQUEST: 8000,
+            TEST_DURATION: 60,
+            CONNECTIONS: 10000,
+            PIPELINING: 1000000,
+            STEP_UP: 3000,
+        },
+        {
+            BATCH_SIZE: 1000,
+            WORKER: 64,
+            RATE_OF_REQUEST: 8000,
+            TEST_DURATION: 60,
+            CONNECTIONS: 10000,
+            PIPELINING: 1000000,
+            STEP_UP: 3000,
+        },
+    ];
 
-        const instance = autocannon({
-            url: FRS_URL,
-            pipelining: PIPELINING,
-            method: "POST",
-            connectionRate: RATE_OF_REQUEST,
-            connections : CONNECTIONS , 
-            overallRate: RATE_OF_REQUEST , 
-            duration : TEST_DURATION , 
-            workers : WORKER,
-            requests : obj.map((v => {
-                return {
-                    body: JSON.stringify(v.payload),
-                    headers : v.headers,
-                    method : "POST",
-                    path : v.url
-                }
-            })) 
-        })
 
-        autocannon.track(instance , {
-            progressBarString: true , 
-            renderLatencyTable : true , 
-            renderProgressBar : true , 
-        })
-
-        // results.push(new Promise((resolve ) => {
-        //     instance.on("done" , (result) => {
-        //        resolve(result)
-        //     })
-        // }))
-
-        break
+    for (const config of configs) {
+        const stepUp = config.STEP_UP
+        let i = 0;
+        for await(const obj of batchRequests(config.BATCH_SIZE)) {
+            console.log(`read ${obj.length} records : stressing ${FRS_URL}`)
+    
+            const instance = autocannon({
+                url: FRS_URL,
+                pipelining: config.PIPELINING,
+                method: "POST",
+                connectionRate: config.RATE_OF_REQUEST + i * stepUp,
+                connections : config.CONNECTIONS , 
+                overallRate: config.RATE_OF_REQUEST + i * stepUp, 
+                duration : config.TEST_DURATION , 
+                workers : config.WORKER,
+                requests : obj.map((v => {
+                    return {
+                        body: JSON.stringify(v.payload),
+                        headers : v.headers,
+                        method : "POST",
+                        path : v.url
+                    }
+                })) 
+            })
+    
+            autocannon.track(instance , {
+                progressBarString: true , 
+                renderLatencyTable : true , 
+                renderProgressBar : true , 
+            })
+    
+    
+            await (async () => {
+                return (new Promise((resolve ) => {
+                    instance.on("done" , (result) => {
+                       resolve(result)
+                    })
+                }))
+            })()
+            i++
+        }
     }
+
+
+    
 
 
 })();
