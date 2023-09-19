@@ -172,6 +172,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 1000,
             PIPELINING: 1000,
             STEP_UP : 100,
+            MAX_REQ: 12000
         },
         {
             BATCH_SIZE: 10000,
@@ -181,6 +182,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 1000,
             PIPELINING: 1000,
             STEP_UP : 1000,
+            MAX_REQ: 12000
         },
         // smaller batches quicker load 
         {
@@ -191,6 +193,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 1000,
             PIPELINING: 10000,
             STEP_UP : 2000,
+            MAX_REQ: 12000
         },
         // smaller batches qicker load
         {
@@ -201,6 +204,8 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 10000,
             PIPELINING: 1000000,
             STEP_UP: 3000,
+            MAX_REQ: 12000,
+
         },
         {
             BATCH_SIZE: 1000,
@@ -210,6 +215,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 10000,
             PIPELINING: 1000000,
             STEP_UP: 3000,
+            MAX_REQ: 12000
         },
         {
             BATCH_SIZE: 1000,
@@ -219,14 +225,29 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 10000,
             PIPELINING: 1000000,
             STEP_UP: 3000,
+            MAX_REQ: 12000
+        },
+        {
+            BATCH_SIZE: 1000,
+            WORKER: 64,
+            RATE_OF_REQUEST: 1000,
+            TEST_DURATION: 60,
+            CONNECTIONS: 10000,
+            PIPELINING: 1000000,
+            STEP_UP: 3000,
+            MAX_REQ: 20000
         },
     ];
 
 
     for (const config of configs) {
-        const stepUp = config.STEP_UP
+        let stepUp = config.STEP_UP
         let i = 0;
         for await(const obj of batchRequests(config.BATCH_SIZE)) {
+            currentRate = config.RATE_OF_REQUEST + i * stepUp
+            if(currentRate >= config.RATE_OF_REQUEST){
+                stepUp = 0
+            }
             console.log(`read ${obj.length} records : stressing ${FRS_URL}`)
     
             const instance = autocannon({
@@ -235,7 +256,7 @@ async function* batchRequests(batchSize = 100000) {
                 method: "POST",
                 connectionRate: config.RATE_OF_REQUEST + i * stepUp,
                 connections : config.CONNECTIONS , 
-                overallRate: config.RATE_OF_REQUEST + i * stepUp, 
+                overallRate: currentRate ,
                 duration : config.TEST_DURATION , 
                 workers : config.WORKER,
                 requests : obj.map((v => {
