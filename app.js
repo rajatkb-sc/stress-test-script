@@ -3,13 +3,12 @@ const aggregateResult = autocannon.aggregateResult
 
 
 const fs = require('fs');
-const { config } = require("process");
+const {config} = require("process");
 const readline = require('readline');
 
 const FILE_PATH = 'output.json';
 
 const FRS_URL = "http://feed-relevance-service.sharechat.internal"
-
 
 
 // Overrides
@@ -18,7 +17,6 @@ const FRS_URL = "http://feed-relevance-service.sharechat.internal"
 // const RANKER_TEST_VARIANT_VSF = "control"
 const RANKER_GLOBAL_FEED_VARIANT = "variant-gf-13"
 const LIMIT = 10
-
 
 
 const LANGUAGES = [
@@ -54,8 +52,8 @@ async function* batchRequests(batchSize = 100000) {
 
     for await (const jsonObject of loadJSONL(FILE_PATH)) {
 
-        let endpoint = ""
-
+        let endpoint = "", language
+        language = jsonObject.language
         switch (jsonObject.feedType) {
             case "video-feed": {
                 endpoint = "v2/videoFeed"
@@ -71,15 +69,11 @@ async function* batchRequests(batchSize = 100000) {
             }
         }
 
-        if (endpoint == "") {
+        if (endpoint == "" || language == "") {
             continue
         }
+        url = `/${language}/${endpoint}`
 
-        const urls = LANGUAGES.map(lang => {
-            return `/${lang}/${endpoint}`
-        })
-
-       
         let payload
 
         const REQUEST_ID = "Request-Id"
@@ -94,13 +88,13 @@ async function* batchRequests(batchSize = 100000) {
                 jsonObject.payload.experiment.feedRelGlobalFeedExperiment = RANKER_GLOBAL_FEED_VARIANT
                 // jsonObject.payload.experiment.feedRelGlobalRevenueExperiment = "control"
                 payload = {
-                    feedType : jsonObject.feedType,
-                    payload : jsonObject.payload,
-                    headers  : {
-                        [REQUEST_ID] : jsonObject.requestId,
-                        "SESSION-ID" : jsonObject.sessionId,
+                    feedType: jsonObject.feedType,
+                    payload: jsonObject.payload,
+                    headers: {
+                        [REQUEST_ID]: jsonObject.requestId,
+                        "SESSION-ID": jsonObject.sessionId,
                     },
-                    
+
                 }
             }
             case "trending" : {
@@ -108,13 +102,13 @@ async function* batchRequests(batchSize = 100000) {
                 jsonObject.payload.experiment.feedRelGlobalFeedExperiment = RANKER_GLOBAL_FEED_VARIANT
                 // jsonObject.payload.experiment.feedRelGlobalRevenueExperiment = "control"
                 payload = {
-                    feedType : jsonObject.feedType,
-                    payload : jsonObject.payload,
-                    headers : {
-                        [REQUEST_ID] : jsonObject.requestId,
-                        [SESSION_ID] : jsonObject.sessionId,
+                    feedType: jsonObject.feedType,
+                    payload: jsonObject.payload,
+                    headers: {
+                        [REQUEST_ID]: jsonObject.requestId,
+                        [SESSION_ID]: jsonObject.sessionId,
                     },
-                    
+
                 }
                 break
             }
@@ -123,24 +117,20 @@ async function* batchRequests(batchSize = 100000) {
                 jsonObject.payload.feedRelGlobalFeedExperiment = RANKER_GLOBAL_FEED_VARIANT
                 // jsonObject.payload.feedRelGlobalRevenueExperiment = "control"
                 payload = {
-                    feedType : jsonObject.feedType,
-                    payload : jsonObject.payload,
-                    headers : {
-                        [REQUEST_ID] : jsonObject.requestId,
-                        [SESSION_ID] : jsonObject.sessionId,
+                    feedType: jsonObject.feedType,
+                    payload: jsonObject.payload,
+                    headers: {
+                        [REQUEST_ID]: jsonObject.requestId,
+                        [SESSION_ID]: jsonObject.sessionId,
                     }
-                    
+
                 }
             }
         }
-
-        urls.forEach((url) => {
-            batchedObjects.push({
-                ...payload,
-                url,
-            })
+        batchedObjects.push({
+            ...payload,
+            url,
         })
-
         i++
 
 
@@ -152,7 +142,7 @@ async function* batchRequests(batchSize = 100000) {
     }
 
 
-    if (batchedObjects.length !== 0){
+    if (batchedObjects.length !== 0) {
         yield batchedObjects
     }
 
@@ -160,7 +150,6 @@ async function* batchRequests(batchSize = 100000) {
 
 // Usage example
 (async () => {
-
 
 
     const configs = [
@@ -171,8 +160,8 @@ async function* batchRequests(batchSize = 100000) {
             TEST_DURATION: 5 * 60, // warm up
             CONNECTIONS: 1000,
             PIPELINING: 1000,
-            STEP_UP : 100,
-            MAX_REQ: 12000
+            STEP_UP: 100,
+            MAX_REQ: 10000
         },
         {
             BATCH_SIZE: 10000,
@@ -181,10 +170,10 @@ async function* batchRequests(batchSize = 100000) {
             TEST_DURATION: 5 * 60, // warm up
             CONNECTIONS: 1000,
             PIPELINING: 1000,
-            STEP_UP : 1000,
-            MAX_REQ: 12000
+            STEP_UP: 1000,
+            MAX_REQ: 10000
         },
-        // smaller batches quicker load 
+        // smaller batches quicker load
         {
             BATCH_SIZE: 1000,
             WORKER: 64,
@@ -192,8 +181,8 @@ async function* batchRequests(batchSize = 100000) {
             TEST_DURATION: 60,
             CONNECTIONS: 1000,
             PIPELINING: 10000,
-            STEP_UP : 2000,
-            MAX_REQ: 12000
+            STEP_UP: 2000,
+            MAX_REQ: 10000
         },
         // smaller batches qicker load
         {
@@ -204,7 +193,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 10000,
             PIPELINING: 1000000,
             STEP_UP: 3000,
-            MAX_REQ: 12000,
+            MAX_REQ: 10000
 
         },
         {
@@ -215,7 +204,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 10000,
             PIPELINING: 1000000,
             STEP_UP: 3000,
-            MAX_REQ: 12000
+            MAX_REQ: 10000
         },
         {
             BATCH_SIZE: 1000,
@@ -225,7 +214,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 10000,
             PIPELINING: 1000000,
             STEP_UP: 3000,
-            MAX_REQ: 12000
+            MAX_REQ: 10000
         },
         {
             BATCH_SIZE: 1000,
@@ -235,7 +224,7 @@ async function* batchRequests(batchSize = 100000) {
             CONNECTIONS: 10000,
             PIPELINING: 1000000,
             STEP_UP: 3000,
-            MAX_REQ: 20000
+            MAX_REQ: 15000
         },
     ];
 
@@ -245,50 +234,47 @@ async function* batchRequests(batchSize = 100000) {
         let i = 0;
         for await(const obj of batchRequests(config.BATCH_SIZE)) {
             currentRate = config.RATE_OF_REQUEST + i * stepUp
-            if(currentRate >= config.RATE_OF_REQUEST){
+            if (currentRate >= config.MAX_REQ) {
                 stepUp = 0
             }
             console.log(`read ${obj.length} records : stressing ${FRS_URL}`)
-    
+
             const instance = autocannon({
                 url: FRS_URL,
                 pipelining: config.PIPELINING,
                 method: "POST",
                 connectionRate: config.RATE_OF_REQUEST + i * stepUp,
-                connections : config.CONNECTIONS , 
-                overallRate: currentRate ,
-                duration : config.TEST_DURATION , 
-                workers : config.WORKER,
-                requests : obj.map((v => {
+                connections: config.CONNECTIONS,
+                overallRate: currentRate,
+                duration: config.TEST_DURATION,
+                workers: config.WORKER,
+                requests: obj.map((v => {
                     return {
                         body: JSON.stringify(v.payload),
-                        headers : v.headers,
-                        method : "POST",
-                        path : v.url
+                        headers: v.headers,
+                        method: "POST",
+                        path: v.url
                     }
-                })) 
+                }))
             })
-    
-            autocannon.track(instance , {
-                progressBarString: true , 
-                renderLatencyTable : true , 
-                renderProgressBar : true , 
+
+            autocannon.track(instance, {
+                progressBarString: true,
+                renderLatencyTable: true,
+                renderProgressBar: true,
             })
-    
-    
+
+
             await (async () => {
-                return (new Promise((resolve ) => {
-                    instance.on("done" , (result) => {
-                       resolve(result)
+                return (new Promise((resolve) => {
+                    instance.on("done", (result) => {
+                        resolve(result)
                     })
                 }))
             })()
             i++
         }
     }
-
-
-    
 
 
 })();
