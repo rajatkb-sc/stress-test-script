@@ -2,6 +2,7 @@ const autocannon = require("autocannon")
 
 const fs = require('fs');
 const readline = require('readline');
+const { exec } = require('child_process');
 
 const FILE_PATH = 'output.json';
 
@@ -174,7 +175,7 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
 (async () => {
 
 
-    const totalLines = getLineCount(FILE_PATH)
+    const totalLines = await getLineCount(FILE_PATH)
 
     console.log(`reading : ${FILE_PATH} lines total : ${totalLines}`)
 
