@@ -9,7 +9,6 @@ const FILE_PATH = 'output.json';
 const FRS_URL = "http://feed-relevance-service.sharechat.internal"
 
 
-
 // Overrides
 const RANKER_TEST_VARIANT_TF = "variant-tf-13"
 const RANKER_TEST_VARIANT_VF = "variant-vf-13"
@@ -155,6 +154,8 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
             url : `/${lang}/${endpoint}`
         }
 
+        batchedObjects.push(payload)
+
         i++
         
         if (i === batchSize) {
@@ -182,10 +183,10 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
     const configs = [
         {
             BATCH_SIZE: 100000,
-            RATE_OF_REQUEST: 1000,
-            TEST_DURATION:   60, // warm up
-            CONNECTIONS: 1000,
-            PIPELINING: 10000,
+            RATE_OF_REQUEST: 1,
+            TEST_DURATION:   2 * 60, // warm up
+            CONNECTIONS: 1,
+            PIPELINING: 1,
             STEP_UP : 50,
             MAX_RATE_OF_REQUEST: 2000
         },
