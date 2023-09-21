@@ -16,6 +16,18 @@ const RANKER_TEST_VARIANT_VSF = "variant-vs-13"
 const RANKER_GLOBAL_FEED_VARIANT = "variant-gf-15"
 const LIMIT = 20
 
+// configs
+const CONFIGS = [
+    {
+        BATCH_SIZE: 1000,
+        RATE_OF_REQUEST: 2000,
+        TEST_DURATION:   60, // warm up
+        CONNECTIONS: 100,
+        PIPELINING: 10000,
+        STEP_UP : 500 ,
+        MAX_RATE_OF_REQUEST: 7000
+    },
+];
 
 
 
@@ -182,20 +194,9 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
 
     console.log(`reading : ${FILE_PATH} lines total : ${totalLines}`)
 
-    const configs = [
-        {
-            BATCH_SIZE: 1000,
-            RATE_OF_REQUEST: 2000,
-            TEST_DURATION:   60, // warm up
-            CONNECTIONS: 100,
-            PIPELINING: 10000,
-            STEP_UP : 500 ,
-            MAX_RATE_OF_REQUEST: 7000
-        },
-    ];
-   
+    
 
-    for (const config of configs) {
+    for (const config of CONFIGS) {
 
         
         const batchSize = config.BATCH_SIZE
