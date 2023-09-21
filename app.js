@@ -117,6 +117,7 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
                     },
                     
                 }
+                break
             }
             case "trending" : {
                 jsonObject.payload.experiment.variant = RANKER_TEST_VARIANT_TF
@@ -146,6 +147,7 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
                     }
                     
                 }
+                break
             }
         }
 
@@ -182,13 +184,13 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
 
     const configs = [
         {
-            BATCH_SIZE: 100000,
-            RATE_OF_REQUEST: 1,
-            TEST_DURATION:   2 * 60, // warm up
-            CONNECTIONS: 1,
-            PIPELINING: 1,
-            STEP_UP : 50,
-            MAX_RATE_OF_REQUEST: 2000
+            BATCH_SIZE: 1000,
+            RATE_OF_REQUEST: 2000,
+            TEST_DURATION:   60, // warm up
+            CONNECTIONS: 100,
+            PIPELINING: 10000,
+            STEP_UP : 500 ,
+            MAX_RATE_OF_REQUEST: 7000
         },
     ];
    
