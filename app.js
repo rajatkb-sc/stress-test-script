@@ -14,7 +14,7 @@ const RANKER_TEST_VARIANT_TF = "variant-tf-13"
 const RANKER_TEST_VARIANT_VF = "variant-vf-13"
 const RANKER_TEST_VARIANT_VSF = "variant-vs-13"
 const RANKER_GLOBAL_FEED_VARIANT = "variant-gf-15"
-const LIMIT = 20
+const LIMIT = 10
 
 // configs
 const CONFIGS = [
