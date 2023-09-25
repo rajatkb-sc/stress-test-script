@@ -19,16 +19,18 @@ const LIMIT = 10
 // configs
 const CONFIGS = [
     {
-        BATCH_SIZE: 10000,
+        BATCH_SIZE: 1000,
         RATE_OF_REQUEST: 2000,
         TEST_DURATION:   60, // warm up
-        CONNECTIONS: 10000,
-        PIPELINING: 1000000,
+        CONNECTIONS: 1000,
+        PIPELINING: 1000,
         STEP_UP : 500,
         MAX_RATE_OF_REQUEST: 3500,
         ITERATIONS : Number.MAX_VALUE
     },
 ];
+
+
 
 async function* loadJSONL(filePath, startLine = -1) {
     const fileStream = fs.createReadStream(filePath);
@@ -219,7 +221,6 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
                     url: FRS_URL,
                     pipelining: config.PIPELINING,
                     method: "POST",
-                    connectionRate: config.RATE_OF_REQUEST + i * stepUp,
                     connections : config.CONNECTIONS , 
                     overallRate: Math.min(config.RATE_OF_REQUEST + i * stepUp , config.MAX_RATE_OF_REQUEST), 
                     duration : config.TEST_DURATION , 
