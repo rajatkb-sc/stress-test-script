@@ -30,8 +30,6 @@ const CONFIGS = [
     },
 ];
 
-
-
 async function* loadJSONL(filePath, startLine = -1) {
     const fileStream = fs.createReadStream(filePath);
     const rl = readline.createInterface({
