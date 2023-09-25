@@ -19,14 +19,14 @@ const LIMIT = 10
 // configs
 const CONFIGS = [
     {
-        BATCH_SIZE: 1000,
+        BATCH_SIZE: 10000,
         RATE_OF_REQUEST: 2000,
         TEST_DURATION:   60, // warm up
-        CONNECTIONS: 100,
-        PIPELINING: 10000,
-        STEP_UP : 500 ,
-        MAX_RATE_OF_REQUEST: 7000,
-        ITERATIONS : 100
+        CONNECTIONS: 10000,
+        PIPELINING: 1000000,
+        STEP_UP : 500,
+        MAX_RATE_OF_REQUEST: 3500,
+        ITERATIONS : Number.MAX_VALUE
     },
 ];
 
