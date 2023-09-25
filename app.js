@@ -223,7 +223,7 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
                     method: "POST",
                     connectionRate: config.RATE_OF_REQUEST + i * stepUp,
                     connections : config.CONNECTIONS , 
-                    overallRate: config.RATE_OF_REQUEST + i * stepUp, 
+                    overallRate: Math.min(config.RATE_OF_REQUEST + i * stepUp , config.MAX_RATE_OF_REQUEST), 
                     duration : config.TEST_DURATION , 
                     workers : 1,
                     requests : obj.map((v => {
