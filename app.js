@@ -25,7 +25,8 @@ const CONFIGS = [
         CONNECTIONS: 100,
         PIPELINING: 10000,
         STEP_UP : 500 ,
-        MAX_RATE_OF_REQUEST: 7000
+        MAX_RATE_OF_REQUEST: 7000,
+        ITERATIONS : 100
     },
 ];
 
@@ -198,14 +199,13 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
 
     for (const config of CONFIGS) {
 
-        
         const batchSize = config.BATCH_SIZE
         
         const duration = config.TEST_DURATION
 
         const stepUp = config.STEP_UP
 
-        const totalDuration = Math.floor(totalLines / batchSize) * duration
+        const totalDuration = Math.floor(totalLines / batchSize) * duration * config.ITERATIONS
 
         console.log(`Stress test started : estimated duration ${totalDuration}`)
 
@@ -213,44 +213,49 @@ async function* batchRequests(batchSize = 100000 , randomlineStart = -1) {
 
         const randomStartLine = Math.floor(Math.random() * totalLines) + 1;
 
-        for await(const obj of batchRequests(config.BATCH_SIZE , randomStartLine)) {
-            console.log(`read ${obj.length} records : stressing ${FRS_URL}` , config)
-    
-            const instance = autocannon({
-                url: FRS_URL,
-                pipelining: config.PIPELINING,
-                method: "POST",
-                connectionRate: config.RATE_OF_REQUEST + i * stepUp,
-                connections : config.CONNECTIONS , 
-                overallRate: config.RATE_OF_REQUEST + i * stepUp, 
-                duration : config.TEST_DURATION , 
-                workers : 1,
-                requests : obj.map((v => {
-                    return {
-                        body: JSON.stringify(v.payload),
-                        headers : v.headers,
-                        method : "POST",
-                        path : v.url
-                    }
-                })) 
-            })
-    
-            autocannon.track(instance , {
-                progressBarString: true , 
-                renderLatencyTable : true , 
-                renderProgressBar : true , 
-            })
-    
-    
-            await (async () => {
-                return (new Promise((resolve ) => {
-                    instance.on("done" , (result) => {
-                       resolve(result)
-                    })
-                }))
-            })()
-            i++
+        for (let iter = 0 ; iter < config.ITERATIONS ; iter++) {
+            for await(const obj of batchRequests(config.BATCH_SIZE , randomStartLine)) {
+                console.log(`batch: ${i} read ${obj.length} records : stressing ${FRS_URL}` , config)
+        
+                const instance = autocannon({
+                    url: FRS_URL,
+                    pipelining: config.PIPELINING,
+                    method: "POST",
+                    connectionRate: config.RATE_OF_REQUEST + i * stepUp,
+                    connections : config.CONNECTIONS , 
+                    overallRate: config.RATE_OF_REQUEST + i * stepUp, 
+                    duration : config.TEST_DURATION , 
+                    workers : 1,
+                    requests : obj.map((v => {
+                        return {
+                            body: JSON.stringify(v.payload),
+                            headers : v.headers,
+                            method : "POST",
+                            path : v.url
+                        }
+                    })) 
+                })
+        
+                autocannon.track(instance , {
+                    progressBarString: true , 
+                    renderLatencyTable : true , 
+                    renderProgressBar : true , 
+                })
+        
+        
+                await (async () => {
+                    return (new Promise((resolve ) => {
+                        instance.on("done" , (result) => {
+                           resolve(result)
+                        })
+                    }))
+                })()
+                i++
+            }
         }
+
+
+        
     }
 
 
