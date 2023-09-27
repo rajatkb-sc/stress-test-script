@@ -8,6 +8,7 @@ const FILE_PATH = 'output.json';
 
 const FRS_URL = "http://feed-relevance-service.sharechat.internal"
 
+const FILE_BUFFER_SIZE = 1024 * 1024 * 1024 * 5
 
 // Overrides
 const RANKER_TEST_VARIANT_TF = "variant-tf-13"
@@ -33,14 +34,14 @@ const CONFIGS = [
 
 
 async function* loadJSONL(filePath, startLine = -1) {
-    const fileStream = fs.createReadStream(filePath);
+    const fileStream = fs.createReadStream(filePath , {
+        highWaterMark : FILE_BUFFER_SIZE
+    });
     const rl = readline.createInterface({
         input: fileStream,
         crlfDelay: Infinity
     });
-
     let lineCount = 0;
-
     for await (const line of rl) {
         lineCount++;
         if (lineCount < startLine) {
