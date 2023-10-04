@@ -7,6 +7,7 @@ bq extract --destination_format=NEWLINE_DELIMITED_JSON maximal-furnace-783:rajat
 echo "DOWNLOADING DATASET ..."
 gsutil cp gs://rajat-temp/stress_test/output.json .
 
+echo "REMOVING DATASET FROM STORAGE ..."
 gsutil rm gs://rajat-temp/stress_test/output.json
 
 echo "CLEANING_UP_DATASET ..."
