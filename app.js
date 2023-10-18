@@ -13,24 +13,22 @@ const FRS_URL = "http://feed-relevance-service.sharechat.internal"
 const RANKER_TEST_VARIANT_TF = "variant-tf-13"
 const RANKER_TEST_VARIANT_VF = "variant-vf-13"
 const RANKER_TEST_VARIANT_VSF = "variant-vs-13"
-const RANKER_GLOBAL_FEED_VARIANT = "variant-gf-15"
+const RANKER_GLOBAL_FEED_VARIANT = "variant-gf-32"
 const LIMIT = 10
 
 // configs
 const CONFIGS = [
     {
         BATCH_SIZE: 1000,
-        RATE_OF_REQUEST: 2000,
-        TEST_DURATION:   60, // warm up
-        CONNECTIONS: 1000,
+        RATE_OF_REQUEST: 750,
+        TEST_DURATION:   10, // warm up
+        CONNECTIONS: 100,
         PIPELINING: 1000,
-        STEP_UP : 500,
-        MAX_RATE_OF_REQUEST: 3500,
+        STEP_UP : 250,
+        MAX_RATE_OF_REQUEST: 3750,
         ITERATIONS : Number.MAX_VALUE
     },
 ];
-
-
 
 async function* loadJSONL(filePath, startLine = -1) {
     const fileStream = fs.createReadStream(filePath);
